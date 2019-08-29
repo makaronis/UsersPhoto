@@ -1,4 +1,4 @@
-package com.makaroni.usersphoto.data;
+package com.makaroni.usersphoto.loaders;
 
 import android.content.Context;
 
@@ -6,14 +6,15 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.loader.content.AsyncTaskLoader;
 
+import com.makaroni.usersphoto.data.User;
+import com.makaroni.usersphoto.helper.QueryUtils;
+
 import java.util.List;
 
 public class UsersLoader extends AsyncTaskLoader<List<User>> {
-    private String mUrl;
 
-    public UsersLoader(@NonNull Context context, String mUrl) {
+    public UsersLoader(@NonNull Context context) {
         super(context);
-        this.mUrl = mUrl;
     }
     @Override
     protected void onStartLoading() {
@@ -23,10 +24,8 @@ public class UsersLoader extends AsyncTaskLoader<List<User>> {
     @Nullable
     @Override
     public List<User> loadInBackground() {
-        if (mUrl == null) {
-            return null;
-        }
-        List<User> users = QueryUtils.getNetworkRequest(mUrl);
+
+        List<User> users = QueryUtils.extractUsers();
         return users;
     }
 

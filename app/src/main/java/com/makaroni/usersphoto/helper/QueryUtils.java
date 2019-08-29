@@ -1,6 +1,9 @@
-package com.makaroni.usersphoto.data;
+package com.makaroni.usersphoto.helper;
 
 import android.util.Log;
+
+import com.makaroni.usersphoto.data.PhotoImage;
+import com.makaroni.usersphoto.data.User;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -19,14 +22,49 @@ import java.util.List;
 
 public final class QueryUtils {
     private static final String LOG_TAG = QueryUtils.class.getSimpleName();
-    private QueryUtils() {
+    public static final String JSON_BASE = "http://jsonplaceholder.typicode.com/";
+    public static final String JSON_USERS = "users";
+    public static final String JSON_ALBUMS = "albums";
+    public static final String JSON_PHOTOS = "photos";
+    private QueryUtils() { }
+
+    public static ArrayList<PhotoImage> loadPhotos(List<Integer>){
+
     }
 
-    public static ArrayList<User> extractUsers(String jsonRequest) {
-        ArrayList<User> users = new ArrayList<>();
-
+    public static ArrayList<Integer> extractAlbumIds(int userId){
+        ArrayList<Integer> albumIds = new ArrayList<>();
+        URL url = createUrl(JSON_ALBUMS + "?userId=" + userId);
+        String json = null;
         try {
-            JSONArray usersArray = new JSONArray(jsonRequest);
+            json = makeHttpRequest(url);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        try {
+            JSONArray albumsArray = new JSONArray(json);
+            for(int a = 0 ; a < albumsArray.length(); a++){
+                JSONObject currentAlbum = albumsArray.getJSONObject(a);
+                albumIds.add(currentAlbum.getInt("id"));
+            }
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+        return albumIds;
+    }
+
+
+    public static ArrayList<User> extractUsers() {
+        ArrayList<User> users = new ArrayList<>();
+        URL url = createUrl(JSON_USERS);
+        String jsonResponce = "";
+        try {
+            jsonResponce = makeHttpRequest(url);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        try {
+            JSONArray usersArray = new JSONArray(jsonResponce);
             for (int j = 0 ; j < usersArray.length(); j++){
                 JSONObject currentUser = usersArray.getJSONObject(j);
                 String name = currentUser.getString("name");
@@ -35,13 +73,8 @@ public final class QueryUtils {
             }
 
         } catch (JSONException e) {
-            // If an error is thrown when executing any of the above statements in the "try" block,
-            // catch the exception here, so the app doesn't crash. Print a log message
-            // with the message from the exception.
             Log.e("QueryUtils", "Problem parsing JSON results", e);
         }
-
-        // Return the list of earthquakes
         return users;
     }
     public static List<User> getNetworkRequest(String requestUrl){
@@ -57,6 +90,7 @@ public final class QueryUtils {
     }
     private static URL createUrl(String stringUrl) {
         URL url = null;
+        stringUrl = JSON_BASE + stringUrl;
         try {
             url = new URL(stringUrl);
         } catch (MalformedURLException e) {
@@ -67,7 +101,6 @@ public final class QueryUtils {
     private static String makeHttpRequest(URL url) throws IOException {
         String jsonResponse = "";
 
-        // If the URL is null, then return early.
         if (url == null) {
             return jsonResponse;
         }
@@ -76,13 +109,11 @@ public final class QueryUtils {
         InputStream inputStream = null;
         try {
             urlConnection = (HttpURLConnection) url.openConnection();
-            urlConnection.setReadTimeout(10000 /* milliseconds */);
-            urlConnection.setConnectTimeout(15000 /* milliseconds */);
+            urlConnection.setReadTimeout(10000);
+            urlConnection.setConnectTimeout(15000);
             urlConnection.setRequestMethod("GET");
             urlConnection.connect();
 
-            // If the request was successful (response code 200),
-            // then read the input stream and parse the response.
             if (urlConnection.getResponseCode() == 200) {
                 inputStream = urlConnection.getInputStream();
                 jsonResponse = readFromStream(inputStream);
