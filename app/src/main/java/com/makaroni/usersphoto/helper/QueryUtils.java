@@ -13,6 +13,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -28,14 +29,38 @@ public final class QueryUtils {
     public static final String JSON_PHOTOS = "photos";
     private QueryUtils() { }
 
-    public static ArrayList<PhotoImage> loadPhotos(List<Integer>){
+    public static List<PhotoImage> loadPhotos(List<Integer> albumIds){
+        String json = "";
+        List<PhotoImage> photoImages = new ArrayList<>();
+        //Загружаем фотографии из всех альбомов выбраннаого пользователя
+        for (Integer albumId : albumIds){
+            URL url = createUrl(JSON_PHOTOS + "?albumId=" + albumId);
+            try {
+                json = makeHttpRequest(url);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            try {
+                JSONArray photosArray = new JSONArray(json);
+                for (int a = 0; a < photosArray.length(); a++){
+                    JSONObject currentPhoto = photosArray.getJSONObject(a);
+                    photoImages.add(new PhotoImage(
+                            currentPhoto.getString("title"),
+                            currentPhoto.getString("url")));
+                }
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+        }
 
+        return photoImages;
     }
 
-    public static ArrayList<Integer> extractAlbumIds(int userId){
+    public static List<Integer> extractAlbumIds(int userId){
         ArrayList<Integer> albumIds = new ArrayList<>();
         URL url = createUrl(JSON_ALBUMS + "?userId=" + userId);
         String json = null;
+        // Загружаем id всех альбомов пользователя
         try {
             json = makeHttpRequest(url);
         } catch (IOException e) {
@@ -53,18 +78,18 @@ public final class QueryUtils {
         return albumIds;
     }
 
-
-    public static ArrayList<User> extractUsers() {
+    // Загружаем юзеров
+    public static List<User> extractUsers() {
         ArrayList<User> users = new ArrayList<>();
         URL url = createUrl(JSON_USERS);
-        String jsonResponce = "";
+        String jsonResponse = "";
         try {
-            jsonResponce = makeHttpRequest(url);
+            jsonResponse = makeHttpRequest(url);
         } catch (IOException e) {
             e.printStackTrace();
         }
         try {
-            JSONArray usersArray = new JSONArray(jsonResponce);
+            JSONArray usersArray = new JSONArray(jsonResponse);
             for (int j = 0 ; j < usersArray.length(); j++){
                 JSONObject currentUser = usersArray.getJSONObject(j);
                 String name = currentUser.getString("name");
@@ -77,17 +102,7 @@ public final class QueryUtils {
         }
         return users;
     }
-    public static List<User> getNetworkRequest(String requestUrl){
-        URL url = createUrl(requestUrl);
-        String jsonResponse = null;
-        try {
-            jsonResponse = makeHttpRequest(url);
-        }catch (IOException e){
-            Log.e(LOG_TAG,"Error closing  input stream",e);
-        }
-        List<User> earthquakes = extractUsers(jsonResponse);
-        return earthquakes;
-    }
+
     private static URL createUrl(String stringUrl) {
         URL url = null;
         stringUrl = JSON_BASE + stringUrl;
@@ -144,6 +159,23 @@ public final class QueryUtils {
             }
         }
         return output.toString();
+    }
+
+    public static void copyStream(InputStream is, OutputStream os)
+    {
+        final int buffer_size=1024;
+        try
+        {
+            byte[] bytes = new byte[buffer_size];
+            for(;;)
+            {
+                int count=is.read(bytes, 0, buffer_size);
+                if(count==-1)
+                    break;
+                os.write(bytes, 0, count);
+            }
+        }
+        catch(Exception ex){}
     }
 
 }

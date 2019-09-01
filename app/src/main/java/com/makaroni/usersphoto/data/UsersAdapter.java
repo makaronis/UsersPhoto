@@ -9,7 +9,7 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.makaroni.usersphoto.PhotosActivity;
+import com.makaroni.usersphoto.activity.PhotosActivity;
 import com.makaroni.usersphoto.R;
 
 import java.util.List;
@@ -50,6 +50,7 @@ public class UsersAdapter extends RecyclerView.Adapter<UsersAdapter.UsersViewHol
 
     @Override
     public int getItemCount() {
+
         return users.size();
     }
 
